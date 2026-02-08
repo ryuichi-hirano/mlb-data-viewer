@@ -1,0 +1,592 @@
+version: 2
+
+models:
+  - name: stg_teams
+    description: "Cleansed MLB team master data. One row per team."
+    columns:
+      - name: team_id
+        description: "Primary key - MLB team identifier"
+        tests:
+          - unique
+          - not_null
+      - name: team_full_name
+        description: "Full official team name (e.g., 'New York Yankees')"
+        tests:
+          - not_null
+      - name: team_code
+        description: "Short team code"
+      - name: team_abbreviation
+        description: "Team abbreviation (e.g., 'NYY', 'LAD')"
+        tests:
+          - not_null
+      - name: team_name
+        description: "Team nickname (e.g., 'Yankees')"
+      - name: location_name
+        description: "City or location of the team"
+      - name: league_id
+        description: "League identifier"
+      - name: league_name
+        description: "League name (American League / National League)"
+        tests:
+          - accepted_values:
+              values: ['American League', 'National League']
+              config:
+                where: "league_name is not null"
+      - name: division_id
+        description: "Division identifier"
+      - name: division_name
+        description: "Division name (e.g., 'AL East', 'NL West')"
+        tests:
+          - accepted_values:
+              values: ['AL East', 'AL Central', 'AL West', 'NL East', 'NL Central', 'NL West']
+              config:
+                where: "division_name is not null"
+      - name: venue_id
+        description: "Home venue identifier"
+      - name: venue_name
+        description: "Home venue name"
+      - name: sport_id
+        description: "Sport identifier (1 = MLB)"
+      - name: is_active
+        description: "Whether the team is currently active"
+      - name: first_year_of_play
+        description: "First year the franchise played"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_players
+    description: "Cleansed MLB player biographical and roster information. One row per player."
+    columns:
+      - name: player_id
+        description: "Primary key - MLB player identifier"
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: "Player full name"
+        tests:
+          - not_null
+      - name: first_name
+        description: "Player first name"
+      - name: last_name
+        description: "Player last name"
+      - name: jersey_number
+        description: "Player jersey number"
+      - name: birth_date
+        description: "Player date of birth"
+      - name: birth_city
+        description: "City of birth"
+      - name: birth_country
+        description: "Country of birth"
+      - name: height
+        description: "Player height (e.g., '6'' 2\"')"
+      - name: weight
+        description: "Player weight in pounds"
+      - name: position_code
+        description: "Primary position code (e.g., '1' for pitcher)"
+      - name: position_name
+        description: "Primary position name (e.g., 'Pitcher', 'Shortstop')"
+      - name: position_type
+        description: "Position type category (Pitcher, Catcher, Infielder, Outfielder, etc.)"
+      - name: bat_side
+        description: "Batting side (R, L, S for switch)"
+        tests:
+          - accepted_values:
+              values: ['R', 'L', 'S']
+              config:
+                where: "bat_side is not null"
+      - name: pitch_hand
+        description: "Pitching hand (R, L, S for switch)"
+        tests:
+          - accepted_values:
+              values: ['R', 'L', 'S']
+              config:
+                where: "pitch_hand is not null"
+      - name: current_team_id
+        description: "FK to stg_teams - current team assignment"
+        tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+              config:
+                where: "current_team_id is not null"
+      - name: mlb_debut_date
+        description: "Date of MLB debut"
+      - name: is_active
+        description: "Whether the player is currently on an active roster"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_games
+    description: "Cleansed MLB game results. One row per game."
+    columns:
+      - name: game_pk
+        description: "Primary key - unique game identifier"
+        tests:
+          - unique
+          - not_null
+      - name: game_type
+        description: "Game type code (R=Regular, P=Postseason, S=Spring, etc.)"
+        tests:
+          - accepted_values:
+              values: ['R', 'P', 'S', 'F', 'D', 'L', 'W', 'A', 'E']
+              config:
+                where: "game_type is not null"
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: game_date
+        description: "Date of the game"
+        tests:
+          - not_null
+      - name: game_datetime
+        description: "Full datetime of the game (with timezone)"
+      - name: game_status_code
+        description: "Game status code (F=Final, etc.)"
+      - name: game_status_detail
+        description: "Detailed game status description"
+      - name: home_team_id
+        description: "FK to stg_teams - home team"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+      - name: away_team_id
+        description: "FK to stg_teams - away team"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+      - name: home_score
+        description: "Home team final score"
+      - name: away_score
+        description: "Away team final score"
+      - name: home_wins
+        description: "Home team win count at time of game"
+      - name: home_losses
+        description: "Home team loss count at time of game"
+      - name: away_wins
+        description: "Away team win count at time of game"
+      - name: away_losses
+        description: "Away team loss count at time of game"
+      - name: venue_id
+        description: "Venue identifier"
+      - name: venue_name
+        description: "Venue name"
+      - name: winning_pitcher_id
+        description: "Player ID of winning pitcher"
+      - name: losing_pitcher_id
+        description: "Player ID of losing pitcher"
+      - name: save_pitcher_id
+        description: "Player ID of pitcher who earned save"
+      - name: innings
+        description: "Number of innings played"
+      - name: day_night
+        description: "Day or night game indicator"
+        tests:
+          - accepted_values:
+              values: ['day', 'night']
+              config:
+                where: "day_night is not null"
+      - name: series_description
+        description: "Series description (e.g., 'Regular Season')"
+      - name: series_game_number
+        description: "Game number within the series"
+      - name: double_header
+        description: "Double-header indicator (Y/N/S)"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_batting_stats
+    description: "Cleansed season-level batting statistics. One row per player/season/team/game_type."
+    columns:
+      - name: batting_stats_id
+        description: "Primary key - surrogate ID"
+        tests:
+          - unique
+          - not_null
+      - name: player_id
+        description: "FK to stg_players - batter"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_players')
+              field: player_id
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: team_id
+        description: "FK to stg_teams - team the player batted for"
+        tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+              config:
+                where: "team_id is not null"
+      - name: league_id
+        description: "League identifier"
+      - name: game_type
+        description: "Game type (R=Regular, P=Postseason, etc.)"
+      - name: games_played
+        description: "Number of games played"
+      - name: at_bats
+        description: "Number of at-bats"
+      - name: runs
+        description: "Runs scored"
+      - name: hits
+        description: "Base hits"
+      - name: doubles
+        description: "Doubles hit"
+      - name: triples
+        description: "Triples hit"
+      - name: home_runs
+        description: "Home runs hit"
+      - name: rbi
+        description: "Runs batted in"
+      - name: stolen_bases
+        description: "Stolen bases"
+      - name: caught_stealing
+        description: "Times caught stealing"
+      - name: walks
+        description: "Bases on balls"
+      - name: strikeouts
+        description: "Strikeouts"
+      - name: batting_average
+        description: "Batting average (H/AB)"
+      - name: on_base_percentage
+        description: "On-base percentage"
+      - name: slugging_percentage
+        description: "Slugging percentage"
+      - name: on_base_plus_slugging
+        description: "OPS (OBP + SLG)"
+      - name: plate_appearances
+        description: "Total plate appearances"
+      - name: total_bases
+        description: "Total bases"
+      - name: ground_into_double_play
+        description: "Ground into double play count"
+      - name: hit_by_pitch
+        description: "Times hit by pitch"
+      - name: sacrifice_bunts
+        description: "Sacrifice bunts"
+      - name: sacrifice_flies
+        description: "Sacrifice flies"
+      - name: intentional_walks
+        description: "Intentional walks"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_pitching_stats
+    description: "Cleansed season-level pitching statistics. One row per player/season/team/game_type."
+    columns:
+      - name: pitching_stats_id
+        description: "Primary key - surrogate ID"
+        tests:
+          - unique
+          - not_null
+      - name: player_id
+        description: "FK to stg_players - pitcher"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_players')
+              field: player_id
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: team_id
+        description: "FK to stg_teams - team the player pitched for"
+        tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+              config:
+                where: "team_id is not null"
+      - name: league_id
+        description: "League identifier"
+      - name: game_type
+        description: "Game type (R=Regular, P=Postseason, etc.)"
+      - name: wins
+        description: "Wins"
+      - name: losses
+        description: "Losses"
+      - name: era
+        description: "Earned run average"
+      - name: games
+        description: "Games appeared in"
+      - name: games_started
+        description: "Games started"
+      - name: games_finished
+        description: "Games finished"
+      - name: complete_games
+        description: "Complete games"
+      - name: shutouts
+        description: "Shutouts"
+      - name: saves
+        description: "Saves"
+      - name: save_opportunities
+        description: "Save opportunities"
+      - name: holds
+        description: "Holds"
+      - name: blown_saves
+        description: "Blown saves"
+      - name: innings_pitched
+        description: "Innings pitched"
+      - name: hits_allowed
+        description: "Hits allowed"
+      - name: runs_allowed
+        description: "Runs allowed"
+      - name: earned_runs
+        description: "Earned runs"
+      - name: home_runs_allowed
+        description: "Home runs allowed"
+      - name: walks
+        description: "Walks issued"
+      - name: strikeouts
+        description: "Strikeouts"
+      - name: hit_batsmen
+        description: "Hit batsmen"
+      - name: whip
+        description: "Walks plus hits per innings pitched"
+      - name: batting_average_against
+        description: "Batting average against"
+      - name: wild_pitches
+        description: "Wild pitches"
+      - name: balks
+        description: "Balks"
+      - name: strikeout_walk_ratio
+        description: "Strikeout to walk ratio (K/BB)"
+      - name: strikeouts_per_9
+        description: "Strikeouts per 9 innings (K/9)"
+      - name: walks_per_9
+        description: "Walks per 9 innings (BB/9)"
+      - name: hits_per_9
+        description: "Hits per 9 innings (H/9)"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_statcast
+    description: "Cleansed pitch-level Statcast tracking data. One row per pitch."
+    columns:
+      - name: statcast_id
+        description: "Primary key - surrogate ID"
+        tests:
+          - unique
+          - not_null
+      - name: game_pk
+        description: "Game identifier"
+      - name: game_date
+        description: "Date of the game"
+        tests:
+          - not_null
+      - name: season
+        description: "Season year"
+      - name: batter_id
+        description: "FK to stg_players - batter"
+        tests:
+          - not_null
+      - name: pitcher_id
+        description: "FK to stg_players - pitcher"
+        tests:
+          - not_null
+      - name: batter_name
+        description: "Batter full name (denormalized)"
+      - name: pitcher_name
+        description: "Pitcher full name (denormalized)"
+      - name: play_result
+        description: "Outcome event of the at-bat (e.g., 'single', 'strikeout', 'home_run')"
+      - name: play_description
+        description: "Detailed text description of the play"
+      - name: pitch_zone
+        description: "Pitch zone number (1-14)"
+      - name: batter_side
+        description: "Batter handedness (R/L)"
+        tests:
+          - accepted_values:
+              values: ['R', 'L']
+              config:
+                where: "batter_side is not null"
+      - name: pitcher_throws
+        description: "Pitcher throwing hand (R/L)"
+        tests:
+          - accepted_values:
+              values: ['R', 'L']
+              config:
+                where: "pitcher_throws is not null"
+      - name: home_team_abbreviation
+        description: "Home team abbreviation"
+      - name: away_team_abbreviation
+        description: "Away team abbreviation"
+      - name: pitch_result_type
+        description: "Pitch result type (B=Ball, S=Strike, X=In play)"
+        tests:
+          - accepted_values:
+              values: ['B', 'S', 'X']
+              config:
+                where: "pitch_result_type is not null"
+      - name: pitch_type_code
+        description: "Pitch type code (FF, SL, CU, CH, etc.)"
+      - name: pitch_name
+        description: "Pitch type name (4-Seam Fastball, Slider, etc.)"
+      - name: release_speed
+        description: "Pitch release speed (mph)"
+      - name: release_spin_rate
+        description: "Pitch spin rate (rpm)"
+      - name: release_extension
+        description: "Pitcher release extension (feet)"
+      - name: release_pos_x
+        description: "Horizontal release position (feet)"
+      - name: release_pos_z
+        description: "Vertical release position (feet)"
+      - name: horizontal_movement
+        description: "Horizontal pitch movement (inches)"
+      - name: vertical_movement
+        description: "Vertical pitch movement (inches)"
+      - name: plate_x
+        description: "Horizontal position at home plate (feet from center)"
+      - name: plate_z
+        description: "Vertical position at home plate (feet from ground)"
+      - name: vx0
+        description: "Velocity in x-direction at release (ft/s)"
+      - name: vy0
+        description: "Velocity in y-direction at release (ft/s)"
+      - name: vz0
+        description: "Velocity in z-direction at release (ft/s)"
+      - name: ax
+        description: "Acceleration in x-direction (ft/s^2)"
+      - name: ay
+        description: "Acceleration in y-direction (ft/s^2)"
+      - name: az
+        description: "Acceleration in z-direction (ft/s^2)"
+      - name: strike_zone_top
+        description: "Top of batter strike zone (feet)"
+      - name: strike_zone_bottom
+        description: "Bottom of batter strike zone (feet)"
+      - name: effective_speed
+        description: "Effective speed perceived by batter (mph)"
+      - name: exit_velocity
+        description: "Batted ball exit velocity (mph)"
+      - name: launch_angle
+        description: "Batted ball launch angle (degrees)"
+      - name: hit_distance
+        description: "Projected hit distance (feet)"
+      - name: hit_coord_x
+        description: "Hit location x-coordinate on field diagram"
+      - name: hit_coord_y
+        description: "Hit location y-coordinate on field diagram"
+      - name: expected_batting_avg
+        description: "Expected batting average based on exit velocity/launch angle"
+      - name: expected_woba
+        description: "Expected wOBA based on exit velocity/launch angle"
+      - name: babip_value
+        description: "BABIP value for the event"
+      - name: iso_value
+        description: "Isolated power value for the event"
+      - name: launch_speed_angle_bucket
+        description: "Launch speed/angle classification bucket"
+      - name: at_bat_number
+        description: "At-bat number within the game"
+      - name: pitch_number
+        description: "Pitch number within the at-bat"
+      - name: inning
+        description: "Inning number"
+      - name: inning_half
+        description: "Top or bottom of inning (Top/Bot)"
+      - name: outs
+        description: "Number of outs when batter is up"
+      - name: ball_count
+        description: "Ball count in the at-bat"
+      - name: strike_count
+        description: "Strike count in the at-bat"
+      - name: runner_on_1b_id
+        description: "Player ID of runner on first base (null if empty)"
+      - name: runner_on_2b_id
+        description: "Player ID of runner on second base (null if empty)"
+      - name: runner_on_3b_id
+        description: "Player ID of runner on third base (null if empty)"
+      - name: infield_alignment
+        description: "Infield defensive alignment (Standard, Strategic, etc.)"
+      - name: outfield_alignment
+        description: "Outfield defensive alignment (Standard, Strategic, etc.)"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
+
+  - name: stg_schedule
+    description: "Cleansed MLB game schedule. One row per scheduled game entry."
+    columns:
+      - name: schedule_id
+        description: "Primary key - surrogate ID"
+        tests:
+          - unique
+          - not_null
+      - name: game_pk
+        description: "Game identifier (may have multiple entries for rescheduled games)"
+        tests:
+          - not_null
+      - name: game_date
+        description: "Scheduled game date"
+        tests:
+          - not_null
+      - name: game_type
+        description: "Game type code (R=Regular, P=Postseason, S=Spring, etc.)"
+        tests:
+          - accepted_values:
+              values: ['R', 'P', 'S', 'F', 'D', 'L', 'W', 'A', 'E']
+              config:
+                where: "game_type is not null"
+      - name: season
+        description: "Season year"
+      - name: game_status_code
+        description: "Game status code"
+      - name: game_status_detail
+        description: "Detailed game status description"
+      - name: home_team_id
+        description: "FK to stg_teams - home team"
+        tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+              config:
+                where: "home_team_id is not null"
+      - name: home_team_name
+        description: "Home team name (denormalized)"
+      - name: away_team_id
+        description: "FK to stg_teams - away team"
+        tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+              config:
+                where: "away_team_id is not null"
+      - name: away_team_name
+        description: "Away team name (denormalized)"
+      - name: venue_id
+        description: "Venue identifier"
+      - name: venue_name
+        description: "Venue name"
+      - name: game_datetime
+        description: "Scheduled game datetime (with timezone)"
+      - name: day_night
+        description: "Day or night game indicator"
+        tests:
+          - accepted_values:
+              values: ['day', 'night']
+              config:
+                where: "day_night is not null"
+      - name: series_description
+        description: "Series description"
+      - name: series_game_number
+        description: "Game number within series"
+      - name: games_in_series
+        description: "Total games scheduled in series"
+      - name: double_header
+        description: "Double-header indicator"
+      - name: scheduled_innings
+        description: "Number of scheduled innings (default 9)"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into raw"
