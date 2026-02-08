@@ -1,0 +1,271 @@
+version: 2
+
+models:
+  - name: dim_players
+    description: "Player dimension table with biographical info and current team. One row per player."
+    columns:
+      - name: player_id
+        description: "Primary key - MLB player identifier"
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: "Player full name"
+        tests:
+          - not_null
+      - name: position_name
+        description: "Primary position"
+      - name: position_type
+        description: "Position type (Pitcher, Catcher, Infielder, Outfielder)"
+      - name: bat_side
+        description: "Batting side (R/L/S)"
+      - name: pitch_hand
+        description: "Pitching hand (R/L/S)"
+      - name: current_team_id
+        description: "FK to dim_teams"
+      - name: current_team_name
+        description: "Current team full name"
+      - name: is_active
+        description: "Whether the player is currently active"
+
+  - name: dim_teams
+    description: "Team dimension table with league/division info. One row per team."
+    columns:
+      - name: team_id
+        description: "Primary key - MLB team identifier"
+        tests:
+          - unique
+          - not_null
+      - name: team_full_name
+        description: "Full team name"
+        tests:
+          - not_null
+      - name: team_abbreviation
+        description: "Team abbreviation (e.g., NYY)"
+        tests:
+          - not_null
+      - name: league_name
+        description: "League (American League / National League)"
+      - name: division_name
+        description: "Division (e.g., AL East)"
+      - name: is_active
+        description: "Whether the team is active"
+
+  - name: fct_batting_performance
+    description: "Season-level batting performance fact table combining traditional stats, advanced metrics (wOBA, ISO, BABIP), and Statcast data (xBA, xwOBA, barrel%, hard-hit%). One row per player per season."
+    columns:
+      - name: player_id
+        description: "FK to dim_players"
+        tests:
+          - not_null
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: full_name
+        description: "Player full name"
+      - name: games_played
+        description: "Games played"
+      - name: plate_appearances
+        description: "Plate appearances"
+      - name: batting_average
+        description: "Batting average"
+      - name: on_base_percentage
+        description: "On-base percentage"
+      - name: slugging_percentage
+        description: "Slugging percentage"
+      - name: on_base_plus_slugging
+        description: "OPS"
+      - name: woba
+        description: "Weighted on-base average"
+      - name: iso
+        description: "Isolated power (SLG - AVG)"
+      - name: babip
+        description: "Batting average on balls in play"
+      - name: walk_pct
+        description: "Walk rate (BB/PA)"
+      - name: strikeout_pct
+        description: "Strikeout rate (K/PA)"
+      - name: xba
+        description: "Expected batting average (Statcast)"
+      - name: xwoba
+        description: "Expected wOBA (Statcast)"
+      - name: barrel_pct
+        description: "Barrel percentage (Statcast)"
+      - name: hard_hit_pct
+        description: "Hard-hit percentage (Statcast)"
+      - name: avg_exit_velocity
+        description: "Average exit velocity (Statcast)"
+
+  - name: fct_pitching_performance
+    description: "Season-level pitching performance fact table combining traditional stats, FIP, and Statcast-against metrics. One row per player per season."
+    columns:
+      - name: player_id
+        description: "FK to dim_players"
+        tests:
+          - not_null
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: full_name
+        description: "Player full name"
+      - name: wins
+        description: "Wins"
+      - name: losses
+        description: "Losses"
+      - name: win_pct
+        description: "Win percentage"
+      - name: era
+        description: "Earned run average"
+      - name: whip
+        description: "WHIP"
+      - name: fip
+        description: "Fielding Independent Pitching"
+      - name: innings_pitched
+        description: "Innings pitched"
+      - name: strikeouts
+        description: "Strikeouts"
+      - name: walks
+        description: "Walks"
+      - name: strikeout_pct
+        description: "Strikeout rate"
+      - name: walk_pct
+        description: "Walk rate"
+      - name: barrel_pct_against
+        description: "Barrel% against (Statcast)"
+      - name: hard_hit_pct_against
+        description: "Hard-hit% against (Statcast)"
+      - name: avg_exit_velocity_against
+        description: "Average exit velocity against (Statcast)"
+      - name: xwoba_against
+        description: "xwOBA against (Statcast)"
+
+  - name: fct_game_summary
+    description: "Enriched game summary with team names, pitcher names, and derived fields. One row per completed game."
+    columns:
+      - name: game_pk
+        description: "Primary key - game identifier"
+        tests:
+          - unique
+          - not_null
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: game_date
+        description: "Game date"
+        tests:
+          - not_null
+      - name: game_type
+        description: "Game type (R, P, S, etc.)"
+      - name: home_team_id
+        description: "FK to dim_teams - home team"
+      - name: home_team_name
+        description: "Home team name"
+      - name: away_team_id
+        description: "FK to dim_teams - away team"
+      - name: away_team_name
+        description: "Away team name"
+      - name: home_score
+        description: "Home team score"
+      - name: away_score
+        description: "Away team score"
+      - name: run_margin
+        description: "Absolute run margin"
+      - name: winner
+        description: "'home' or 'away'"
+      - name: winning_team_id
+        description: "FK to dim_teams - winning team"
+      - name: is_extra_innings
+        description: "Whether the game went to extra innings"
+      - name: winning_pitcher_name
+        description: "Winning pitcher name"
+      - name: losing_pitcher_name
+        description: "Losing pitcher name"
+      - name: save_pitcher_name
+        description: "Save pitcher name"
+
+  - name: fct_statcast_leaders
+    description: "Statcast leaderboard with rankings by exit velocity, barrel%, hard-hit%, and xwOBA. Contains both batter and pitcher perspectives. Minimum 50 batted ball events."
+    columns:
+      - name: player_id
+        description: "FK to dim_players"
+        tests:
+          - not_null
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: player_role
+        description: "'batter' or 'pitcher'"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['batter', 'pitcher']
+      - name: full_name
+        description: "Player name"
+      - name: total_batted_balls
+        description: "Total batted ball events"
+      - name: barrel_pct
+        description: "Barrel percentage"
+      - name: hard_hit_pct
+        description: "Hard-hit percentage"
+      - name: avg_exit_velocity
+        description: "Average exit velocity"
+      - name: max_exit_velocity
+        description: "Maximum exit velocity"
+      - name: xba
+        description: "Average expected batting average"
+      - name: xwoba
+        description: "Average expected wOBA"
+      - name: exit_velo_rank
+        description: "Rank by exit velocity within season"
+      - name: barrel_pct_rank
+        description: "Rank by barrel% within season"
+      - name: hard_hit_pct_rank
+        description: "Rank by hard-hit% within season"
+      - name: xwoba_rank
+        description: "Rank by xwOBA within season"
+
+  - name: fct_team_season_summary
+    description: "Comprehensive team season summary combining standings, team batting, team pitching, and Pythagorean win expectation. One row per team per season."
+    columns:
+      - name: team_id
+        description: "FK to dim_teams"
+        tests:
+          - not_null
+      - name: season
+        description: "Season year"
+        tests:
+          - not_null
+      - name: team_full_name
+        description: "Full team name"
+      - name: team_abbreviation
+        description: "Team abbreviation"
+      - name: league_name
+        description: "League"
+      - name: division_name
+        description: "Division"
+      - name: wins
+        description: "Total wins"
+      - name: losses
+        description: "Total losses"
+      - name: win_pct
+        description: "Winning percentage"
+      - name: games_behind
+        description: "Games behind division leader"
+      - name: run_differential
+        description: "Run differential"
+      - name: team_batting_average
+        description: "Team batting average"
+      - name: team_ops
+        description: "Team OPS"
+      - name: team_era
+        description: "Team ERA"
+      - name: team_whip
+        description: "Team WHIP"
+      - name: pythagorean_win_pct
+        description: "Expected win% based on Pythagorean formula (RS^2 / (RS^2 + RA^2))"
+      - name: pythagorean_wins
+        description: "Expected wins based on Pythagorean formula"
