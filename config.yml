@@ -1,0 +1,32 @@
+# MLB Data Viewer - Configuration
+# ================================
+
+database:
+  host: localhost
+  port: 5432
+  dbname: mlb_data
+  user: mlb_user
+  password: mlb_password
+  schema: raw_mlb
+
+extraction:
+  season: 2024
+  game_types:
+    - R  # Regular Season
+  sport_id: 1
+
+rate_limit:
+  request_delay: 1.0        # seconds between API requests
+  statcast_delay: 2.0       # seconds between Statcast requests
+  max_retries: 3
+  backoff_factor: 2          # exponential backoff multiplier
+
+statcast:
+  start_date: "2024-03-28"  # 2024 Opening Day
+  end_date: "2024-09-29"    # 2024 Regular Season End
+  chunk_days: 5             # days per Statcast query chunk
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/extraction.log
