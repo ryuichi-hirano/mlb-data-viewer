@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv
+.python-version
+
+# dbt
+dbt_mlb/dbt_packages/
+dbt_mlb/package-lock.yml
+dbt_mlb/target/
+dbt_mlb/logs/
+dbt_mlb/.user.yml
+
+# Evidence
+evidence_mlb/.evidence/
+evidence_mlb/.vscode/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+
+# External libraries (installed locally)
+MLB-StatsAPI/
