@@ -218,4 +218,12 @@ Test categories:
 
 ## License
 
-MIT
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see the [LICENSE](LICENSE) file for details.
+
+GPL-3.0 is required due to the [MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI) dependency (GPL-3.0 copyleft).
+
+### Data Usage Restrictions
+
+MLB data accessed through the MLB Stats API is restricted to **individual, non-commercial, non-bulk use** per [MLB Advanced Media's terms](http://gdx.mlb.com/components/copyright.txt). Commercial use requires prior written authorization from MLBAM.
+
+See [NOTICE](NOTICE) for full third-party attribution.
