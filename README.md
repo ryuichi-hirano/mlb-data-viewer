@@ -31,8 +31,17 @@ Baseball Savant ─┤  Python ETL  ┌─────┐   │── dim_teams
 ```
 mlb_data_viewer/
 ├── config.yml                  # Database & extraction settings
+├── config.docker.yml           # Docker config (host: db)
+├── docker-compose.yml          # Multi-container orchestration
+├── .env.example                # Environment variable template
 ├── pyproject.toml              # Python dependencies (uv)
 ├── main.py                     # Entry point
+│
+├── docker/                     # Docker build contexts
+│   ├── db/init.sql             # DB init (schema + seed data)
+│   ├── extraction/Dockerfile   # Python extraction container
+│   ├── dbt/Dockerfile          # dbt transformation container
+│   └── evidence/Dockerfile     # Evidence dashboard container
 │
 ├── db/
 │   └── schema.sql              # PostgreSQL DDL (7 raw tables, indexes)
@@ -70,7 +79,87 @@ mlb_data_viewer/
     └── qa_report.md            # QA test coverage report
 ```
 
-## Prerequisites
+## Quick Start (Docker)
+
+The fastest way to get started is using Docker Compose, which sets up PostgreSQL, runs the data pipeline, and launches the dashboard automatically.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) (20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
+
+### 1. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` if needed (defaults work out of the box):
+
+```env
+POSTGRES_USER=mlb_user
+POSTGRES_PASSWORD=mlb_password
+POSTGRES_DB=mlb_data
+EVIDENCE_PORT=3000
+```
+
+### 2. Start the Database and Dashboard
+
+```bash
+docker compose up -d
+```
+
+This starts:
+- **db** — PostgreSQL 16 with schema auto-initialization
+- **evidence** — Dashboard at [http://localhost:3000](http://localhost:3000)
+
+### 3. Run the Data Pipeline
+
+The extraction and dbt steps are one-shot jobs under the `pipeline` profile:
+
+```bash
+# Extract data from MLB Stats API (takes a while on first run)
+docker compose --profile pipeline run --rm extraction
+
+# Run dbt transformations (raw → staging → intermediate → marts)
+docker compose --profile pipeline run --rm dbt
+```
+
+To skip Statcast data (which is the slowest step):
+
+```bash
+docker compose --profile pipeline run --rm extraction --skip statcast
+```
+
+### 4. Access the Dashboard
+
+Open [http://localhost:3000](http://localhost:3000) in your browser. The dashboard reads from the marts tables populated by dbt.
+
+### 5. Stop Services
+
+```bash
+# Stop all running services
+docker compose down
+
+# Stop and remove data volumes (full reset)
+docker compose down -v
+```
+
+### Docker Troubleshooting
+
+| Issue | Solution |
+|---|---|
+| Database connection refused | Wait for healthcheck: `docker compose ps` should show db as "healthy" |
+| Extraction fails mid-run | Re-run with `docker compose --profile pipeline run --rm extraction` (upserts are idempotent) |
+| Dashboard shows no data | Ensure extraction and dbt have completed: check logs with `docker compose logs dbt` |
+| Port 5432 already in use | Change `POSTGRES_PORT` in `.env` or stop your local PostgreSQL |
+| Port 3000 already in use | Change `EVIDENCE_PORT` in `.env` |
+
+---
+
+## Local Development (without Docker)
+
+### Prerequisites
 
 - Python 3.12+
 - PostgreSQL 14+

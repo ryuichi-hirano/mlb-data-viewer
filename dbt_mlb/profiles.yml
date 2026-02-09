@@ -3,7 +3,7 @@ mlb_analytics:
   outputs:
     dev:
       type: postgres
-      host: localhost
+      host: "{{ env_var('DBT_HOST', 'localhost') }}"
       port: 5432
       user: "{{ env_var('DBT_USER', 'postgres') }}"
       password: "{{ env_var('DBT_PASSWORD', 'postgres') }}"

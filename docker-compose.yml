@@ -1,0 +1,77 @@
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mlb_data}
+      POSTGRES_USER: ${POSTGRES_USER:-mlb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mlb_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mlb_user} -d ${POSTGRES_DB:-mlb_data}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Python Data Extraction (one-shot batch job)
+  # ---------------------------------------------------------------------------
+  extraction:
+    build:
+      context: .
+      dockerfile: docker/extraction/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - ./logs:/app/logs
+    restart: "no"
+    profiles: ["pipeline"]
+
+  # ---------------------------------------------------------------------------
+  # dbt Transformations (one-shot batch job)
+  # ---------------------------------------------------------------------------
+  dbt:
+    build:
+      context: .
+      dockerfile: docker/dbt/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DBT_USER: ${DBT_USER:-mlb_user}
+      DBT_PASSWORD: ${DBT_PASSWORD:-mlb_password}
+      DBT_HOST: ${DBT_HOST:-db}
+      DBT_PORT: ${DBT_PORT:-5432}
+      DBT_DBNAME: ${DBT_DBNAME:-mlb_data}
+    restart: "no"
+    profiles: ["pipeline"]
+
+  # ---------------------------------------------------------------------------
+  # Evidence.dev Dashboard
+  # ---------------------------------------------------------------------------
+  evidence:
+    build:
+      context: .
+      dockerfile: docker/evidence/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_USER: ${POSTGRES_USER:-mlb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mlb_password}
+    ports:
+      - "${EVIDENCE_PORT:-3000}:3000"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
