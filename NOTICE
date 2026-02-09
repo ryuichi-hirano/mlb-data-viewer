@@ -1,0 +1,35 @@
+MLB Data Viewer
+Copyright 2025 ryuichi-hirano
+
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
+
+== Third-Party Dependencies ==
+
+MLB-StatsAPI (https://github.com/toddrob99/MLB-StatsAPI)
+  License: GPL-3.0
+
+pybaseball (https://github.com/jldbc/pybaseball)
+  License: MIT
+
+psycopg2-binary (https://www.psycopg.org/)
+  License: LGPL-3.0 (with OpenSSL exception)
+
+PyYAML (https://pyyaml.org/)
+  License: MIT
+
+dbt-core / dbt-postgres (https://www.getdbt.com/)
+  License: Apache-2.0
+
+dbt_utils (https://github.com/dbt-labs/dbt-utils)
+  License: Apache-2.0
+
+Evidence.dev (https://evidence.dev/)
+  License: MIT
+
+== Data Usage Notice ==
+
+MLB data accessed through the MLB Stats API (statsapi.mlb.com) is subject to
+MLB Advanced Media's terms of use and is restricted to individual,
+non-commercial, non-bulk use. Commercial use or bulk access requires prior
+written authorization from MLB Advanced Media.
+See: http://gdx.mlb.com/components/copyright.txt
