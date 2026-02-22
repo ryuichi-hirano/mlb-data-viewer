@@ -1,5 +1,7 @@
 # MLB Data Viewer
 
+[English](README.md) | [日本語](README.ja.md) | [Español](README.es.md) | [한국어](README.ko.md)
+
 An end-to-end MLB analytics pipeline that extracts data from the MLB Stats API and Baseball Savant, transforms it through a dbt data warehouse, and serves interactive dashboards via Evidence.
 
 ## Architecture
